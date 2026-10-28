@@ -1,0 +1,32 @@
+SB TRUCKIN REGO WATCH - FREE STANDALONE APP SETUP (about 15 minutes, all free)
+
+A. CREATE THE FREE DATABASE (Firebase)
+ 1. Go to https://console.firebase.google.com and sign in with any Google account.
+ 2. Add project > name it "sbt-rego" > turn Google Analytics OFF > Create.
+ 3. Build > Authentication > Get started > Email/Password > Enable > Save.
+    Then the Users tab > Add user > your email + a password (this is your app login).
+    Add a second user for reminders, e.g. reminders@sbtruckin.app with its own password.
+ 4. Build > Firestore Database > Create database > location australia-southeast1 (Melbourne/Sydney)
+    > Start in production mode > Create.
+    Open the Rules tab, replace everything with the contents of firestore.rules, Publish.
+ 5. Project settings (gear icon) > General > Your apps > the </> (Web) button
+    > nickname "SBT Rego" > Register app. Copy the firebaseConfig values into config.js.
+
+B. PUT THE APP ONLINE (GitHub Pages, account baljinder2128)
+ 1. On github.com: New repository > name "sbt-rego" > Public > Create.
+ 2. "uploading an existing file" > drag in EVERYTHING from this folder
+    (index.html, config.js, manifest.webmanifest, sw.js, the icons folder) > Commit.
+ 3. Repo Settings > Pages > Source: Deploy from a branch > main / (root) > Save.
+    After about a minute your app is at:  https://baljinder2128.github.io/sbt-rego/
+ 4. Back in Firebase: Authentication > Settings > Authorized domains > Add domain
+    > baljinder2128.github.io
+
+C. ON YOUR IPHONE
+ 1. Open https://baljinder2128.github.io/sbt-rego/ in Safari and sign in.
+ 2. Share button > Add to Home Screen > "SBT Rego". It now opens full-screen with the SB REGO icon.
+ 3. Tap Import > choose SBT_vehicle_register_2026.xlsx to load all 7 vehicles.
+
+D. AUTOMATIC REMINDERS
+ Once the app is live, send Claude the projectId, apiKey and the reminder login from step A3.
+ Claude will point the daily 7:52am check at the new database so the email and phone
+ reminders keep coming.

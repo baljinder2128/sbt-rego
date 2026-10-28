@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#14171B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="SBT Rego">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" href="icons/favicon.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}</style>
+<title>SB Truckin Rego Watch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Overpass:wght@600;700;800;900&family=Source+Sans+3:wght@400;600;700&family=Overpass+Mono:wght@500;600&display=swap">
+<style>
+/* SB Truckin brand: sign blue #2E75B6 bar with red logo stripe, red primary actions. Layout: app bar → KPI strip → two-column (fleet register | upcoming + reminders), stacks on phones; add/edit opens in a side sheet. */
+:root{
+  --bg:#F2F3F5; --surface:#ffffff; --surface-2:#F6F8FB; --ink:#111418; --muted:#56606C; --line:#DADDE2;
+  --brand:#14171B; --brand-2:#23272D; --brand-ink:#ffffff; --red:#E10600; --red-ink:#ffffff;
+  --accent:#14171B; --accent-ink:#ffffff; --accent-soft:#E7E9EC;
+  --plate:#ffffff; --plate-ink:#14171B;
+  --ok:#1F7A4A; --ok-bg:#E2F3EA; --warn:#A65F00; --warn-bg:#FFF1D6; --crit:#C41E14; --crit-bg:#FDE7E5;
+  --shadow:0 1px 2px rgba(20,23,27,.08),0 4px 16px rgba(17,20,24,.05);
+  --scrim:rgba(10,18,30,.45);
+  --f-display:"Overpass","Arial Narrow",Arial,sans-serif;
+  --f-body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"Overpass Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1013; --surface:#181B20; --surface-2:#1E2228; --ink:#E9EEF4; --muted:#9AA6B3; --line:#2B3038;
+  --brand:#14171B; --brand-2:#23272D; --brand-ink:#ffffff; --red:#E8231A; --red-ink:#ffffff;
+  --accent:#E9EEF4; --accent-ink:#111418; --accent-soft:#2A313B;
+  --plate:#F2F5FA; --plate-ink:#14171B;
+  --ok:#5CC98C; --ok-bg:#12301F; --warn:#F3B450; --warn-bg:#3A2A10; --crit:#FF8A80; --crit-bg:#3D1A17;
+  --shadow:0 1px 2px rgba(0,0,0,.3); --scrim:rgba(0,0,0,.6); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1013; --surface:#181B20; --surface-2:#1E2228; --ink:#E9EEF4; --muted:#9AA6B3; --line:#2B3038;
+  --brand:#14171B; --brand-2:#23272D; --brand-ink:#ffffff; --red:#E8231A; --red-ink:#ffffff;
+  --accent:#E9EEF4; --accent-ink:#111418; --accent-soft:#2A313B;
+  --plate:#F2F5FA; --plate-ink:#14171B;
+  --ok:#5CC98C; --ok-bg:#12301F; --warn:#F3B450; --warn-bg:#3A2A10; --crit:#FF8A80; --crit-bg:#3D1A17;
+  --shadow:0 1px 2px rgba(0,0,0,.3); --scrim:rgba(0,0,0,.6); color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+.ph select{width:auto;padding:6px 10px;background:var(--surface)}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body)}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.in{max-width:1180px;margin:0 auto}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+
+/* app bar */
+.bar{background:var(--brand);color:var(--brand-ink);border-bottom:4px solid var(--red)}
+.logo img{height:44px;width:auto;display:block;flex:none}
+.logo .div{width:1px;align-self:stretch;background:rgba(255,255,255,.35)}
+.bar .in{display:flex;align-items:center;gap:14px;padding-block:10px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px 12px;margin-right:auto;flex-wrap:wrap}
+.logo svg{flex:none}
+.logo b{font:900 20px/1.1 var(--f-display);letter-spacing:.04em;text-transform:uppercase}
+.regob{display:inline-flex;flex-direction:column;align-items:center;background:#fff;color:#14171B;border:2px solid #14171B;box-shadow:0 0 0 2px #fff;border-radius:5px;padding:4px 8px 3px;line-height:1;flex:none}
+.regob span{font:600 15px/1 var(--f-mono);letter-spacing:.14em}
+.regob small{font:800 8px/1 var(--f-body);letter-spacing:.22em;color:#E10600;margin-top:3px}
+@media (max-width:440px){.logo b{font-size:15px}.logo img{height:36px}.regob span{font-size:12px}}
+.logo small{display:block;font:600 11px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;opacity:.85;margin-top:5px}
+.today{font-size:13px;opacity:.8;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;gap:6px;border-radius:8px;padding:8px 14px;border:1px solid var(--line);background:var(--surface);font-weight:600;font-size:14px;line-height:1.2;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--red);color:var(--red-ink);border-color:var(--red)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent}
+.btn.sm{padding:6px 10px;font-size:13px}
+.btn.danger{color:var(--crit)}
+.bar .btn.primary,.btn.red{background:var(--red);color:var(--red-ink);border-color:var(--red)}
+.bar .btn.primary:hover{filter:brightness(1.08)}
+
+main{padding-block:22px 48px}
+main .in{display:flex;flex-direction:column;gap:20px}
+
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--ink);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);min-width:0;display:flex;flex-direction:column;gap:4px}
+.kpi small{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.kpi b{font:900 32px/1.05 var(--f-display);font-variant-numeric:tabular-nums}
+.kpi span{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.kpi.warn b{color:var(--warn)} .kpi.crit b{color:var(--crit)}
+.kpi.warn{border-top-color:var(--warn)} .kpi.crit{border-top-color:var(--red)}
+.kpi.next b{font-size:20px;line-height:1.25;padding-top:6px}
+
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);min-width:0}
+.ph{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 16px;border-bottom:1px solid var(--line)}
+.ph h2{font:800 17px/1.2 var(--f-display);margin:0 auto 0 0;letter-spacing:.01em;display:flex;align-items:center;gap:8px}
+.ph h2::before{content:"";width:14px;height:5px;background:var(--red);flex:none}
+.pb{padding:14px 16px}
+
+/* toolbar */
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.seg{display:flex;flex-wrap:wrap;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:3px}
+.seg button{border:0;background:transparent;border-radius:6px;padding:5px 10px;font-size:13px;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent)}
+.search{flex:1;min-width:160px;position:relative}
+.search input{width:100%;padding:7px 10px 7px 32px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted)}
+
+/* fleet rows */
+.fleet{display:flex;flex-direction:column}
+.v{display:grid;grid-template-columns:112px minmax(0,1fr) minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line);position:relative}
+.v:last-child{border-bottom:0}
+.v::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:0 3px 3px 0;background:transparent}
+.v.warn::before{background:var(--warn)} .v.crit::before{background:var(--crit)}
+.plate{font:600 15px/1 var(--f-mono);letter-spacing:.1em;background:var(--plate);color:var(--plate-ink);border:2px solid var(--plate-ink);border-radius:6px;padding:8px 6px 6px;text-align:center;text-transform:uppercase;overflow-wrap:anywhere}
+.plate small{display:block;font:600 9px/1 var(--f-body);letter-spacing:.14em;margin-top:5px;opacity:.7}
+.who{min-width:0}
+.who .nm{font-weight:600;overflow-wrap:anywhere}
+.who .meta{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.chips{display:flex;flex-direction:column;gap:6px;min-width:0}
+.chip{display:flex;align-items:center;gap:8px;font-size:13px;min-width:0}
+.chip .k{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);width:30px;flex:none}
+.chip .d{color:var(--muted);white-space:nowrap}
+.tag{font:600 12px/1 var(--f-body);padding:4px 8px;border-radius:99px;white-space:nowrap;font-variant-numeric:tabular-nums;background:var(--ok-bg);color:var(--ok)}
+.tag.warn{background:var(--warn-bg);color:var(--warn)} .tag.crit{background:var(--crit-bg);color:var(--crit)}
+.tag.none{background:var(--surface-2);color:var(--muted)}
+.acts{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+.more{position:relative}
+.menu{position:absolute;right:0;top:calc(100% + 4px);background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.18);padding:6px;z-index:5;min-width:220px;display:flex;flex-direction:column}
+.menu button{border:0;background:transparent;text-align:left;padding:8px 10px;border-radius:6px;font-size:14px}
+.menu button:hover{background:var(--surface-2)}
+.menu .sep{height:1px;background:var(--line);margin:4px 0}
+.menu .danger{color:var(--crit)}
+.sent{font-size:11px;color:var(--muted)}
+
+.empty{padding:36px 20px;text-align:center;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:12px}
+.empty b{color:var(--ink);font:700 18px var(--f-display)}
+
+/* side column */
+.side{display:flex;flex-direction:column;gap:20px;min-width:0}
+.tl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.tl li{display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.tl li:last-child{border-bottom:0}
+.cal{border:1px solid var(--line);border-radius:8px;text-align:center;overflow:hidden;background:var(--surface)}
+.cal i{display:block;font:700 10px/1 var(--f-body);font-style:normal;letter-spacing:.1em;text-transform:uppercase;background:var(--surface-2);color:var(--muted);padding:3px 0}
+.cal b{display:block;font:700 18px/1.2 var(--f-display);padding:3px 0}
+.tl .t{min-width:0;font-size:14px}
+.tl .t strong{font-family:var(--f-mono);font-weight:600;letter-spacing:.05em}
+.tl .t span{display:block;font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.muted{color:var(--muted);font-size:14px;margin:0}
+.rem{display:flex;flex-direction:column;gap:12px}
+.rem .line{display:flex;gap:10px;align-items:flex-start;font-size:14px}
+.rem .ic{flex:none;width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.rem .line div{min-width:0}
+.rem .line b{display:block}
+.rem .line span{color:var(--muted);font-size:13px}
+.steps{display:flex;gap:6px;flex-wrap:wrap}
+.steps .tag{font-size:11px}
+
+/* sheet */
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:20}
+.sheet{position:fixed;top:0;right:0;bottom:0;width:min(460px,100%);background:var(--surface);z-index:21;display:flex;flex-direction:column;box-shadow:-8px 0 30px rgba(0,0,0,.2);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-right:env(safe-area-inset-right,0px)}
+.sheet header{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line)}
+.sheet header h2{margin:0 auto 0 0;font:700 20px/1.2 var(--f-display)}
+.x{border:0;background:transparent;font-size:22px;line-height:1;padding:4px 8px;border-radius:6px;color:var(--muted)}
+form{flex:1;overflow:auto;padding:18px 20px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-content:start}
+fieldset{grid-column:1/-1;border:0;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+legend{font:700 12px/1 var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:0 0 10px;border-bottom:1px solid var(--line);width:100%;margin-bottom:4px}
+label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600;min-width:0}
+label.full{grid-column:1/-1}
+label em{font-style:normal;font-weight:400;color:var(--muted)}
+input,select,textarea{padding:9px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);width:100%;font-size:15px}
+textarea{resize:vertical;min-height:64px}
+.types{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.types label{flex-direction:row;justify-content:center;align-items:center;border:1px solid var(--line);border-radius:8px;padding:9px 4px;font-size:13px;cursor:pointer;background:var(--surface-2)}
+.types input{position:absolute;opacity:0;width:1px;height:1px}
+.types label:has(input:checked){border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.types label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.sheet footer{display:flex;gap:8px;align-items:center;padding:14px 20px;border-top:1px solid var(--line);flex-wrap:wrap}
+.msg{font-size:13px;color:var(--muted)}
+.msg.err{color:var(--crit)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:30;box-shadow:var(--shadow);max-width:calc(100% - 32px)}
+
+@media (max-width:980px){
+  .grid{grid-template-columns:1fr}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:640px){
+  .v{grid-template-columns:92px minmax(0,1fr);gap:10px 12px}
+  .v .chips{grid-column:1/-1}
+  .v .acts{grid-column:1/-1;justify-content:flex-start}
+  .today{display:none}
+  form,fieldset{grid-template-columns:1fr}
+  .types{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (prefers-reduced-motion:no-preference){
+  .sheet{animation:slide .18s ease-out}
+  @keyframes slide{from{transform:translateX(24px);opacity:.6}to{transform:none;opacity:1}}
+}
+
+.btn.hdr{color:var(--brand-ink);border-color:rgba(255,255,255,.3)}
+.btn.hdr:hover{border-color:#fff}
+/* login */
+.login{position:fixed;inset:0;z-index:40;background:var(--brand);display:grid;place-items:center;padding:24px max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px));overflow:auto}
+.login form{display:flex;flex-direction:column;gap:14px;width:min(380px,100%);background:var(--surface);color:var(--ink);border-radius:14px;padding:24px;border-top:5px solid var(--red);overflow:visible;flex:none}
+.login img{width:200px;max-width:100%;margin:0 auto 4px;display:block}
+.login h1{font:900 22px/1.2 var(--f-display);margin:0;text-align:center;text-transform:uppercase;letter-spacing:.04em}
+.login p{margin:0;color:var(--muted);font-size:14px;text-align:center}
+/* import */
+.drop{grid-column:1/-1;border:2px dashed var(--line);border-radius:12px;padding:22px;text-align:center;color:var(--muted);display:flex;flex-direction:column;gap:10px;align-items:center}
+.prev{grid-column:1/-1;overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+.prev table{border-collapse:collapse;width:100%;font-size:13px}
+.prev th,.prev td{padding:7px 9px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+.prev th{background:var(--surface-2);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.prev td.bad{color:var(--crit)}
+@media (max-width:640px){.btn.hdr{padding:6px 10px;font-size:13px}}
+</style>
+
+</head>
+<body>
+<div class="bar gut">
+  <div class="in">
+    <div class="logo"><img src="data:image/png;base64,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" alt="SB Truckin logo"><b>SB Truckin Pty Ltd</b><span class="regob" aria-label="Rego Watch"><span>REGO</span><small>WATCH</small></span></div>
+    <span class="today" id="today"></span>
+    <button class="btn ghost hdr" type="button" id="importBtn">Import</button>
+    <button class="btn primary" type="button" id="addBtn">+ Add vehicle</button>
+    <button class="btn ghost hdr" type="button" id="outBtn" hidden>Sign out</button>
+  </div>
+</div>
+
+<main class="gut">
+  <div class="in">
+    <section class="kpis" aria-label="Summary">
+      <div class="kpi"><small>Vehicles</small><b id="kTotal">–</b><span id="kTypes">Loading…</span></div>
+      <div class="kpi warn"><small>Due in 7 days</small><b id="kWarn">–</b><span>Rego or insurance</span></div>
+      <div class="kpi crit"><small>Urgent / overdue</small><b id="kCrit">–</b><span>2 days or less</span></div>
+      <div class="kpi next"><small>Next expiry</small><b id="kNext">–</b><span id="kNextSub"></span></div>
+    </section>
+
+    <div class="grid">
+      <section class="panel" aria-labelledby="fleetH">
+        <div class="ph"><h2 id="fleetH">Fleet register</h2>
+          <select id="sort" aria-label="Sort by" class="btn sm ghost">
+            <option value="soon">Soonest due first</option>
+            <option value="plate">Plate A–Z</option>
+            <option value="type">Vehicle type</option>
+          </select>
+        </div>
+        <div class="tools">
+          <div class="seg" id="filter" role="group" aria-label="Filter by type">
+            <button type="button" data-f="all" aria-pressed="true">All</button>
+            <button type="button" data-f="car" aria-pressed="false">Cars</button>
+            <button type="button" data-f="motorcycle" aria-pressed="false">Bikes</button>
+            <button type="button" data-f="truck" aria-pressed="false">Trucks</button>
+            <button type="button" data-f="trailer" aria-pressed="false">Trailers</button>
+            <button type="button" data-f="due" aria-pressed="false">Due soon</button>
+          </div>
+          <label class="search" aria-label="Search">
+            <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <input id="q" type="search" placeholder="Search plate, name, insurer">
+          </label>
+        </div>
+        <div class="fleet" id="fleet">
+          <div class="empty"><b>Loading your fleet…</b></div>
+        </div>
+      </section>
+
+      <aside class="side">
+        <section class="panel" aria-labelledby="upH">
+          <div class="ph"><h2 id="upH">Coming up · 60 days</h2></div>
+          <div class="pb"><ul class="tl" id="timeline"><li><span></span><p class="muted">Nothing yet.</p></li></ul></div>
+        </section>
+        <section class="panel" aria-labelledby="remH">
+          <div class="ph"><h2 id="remH">Reminders</h2><span class="tag">On</span></div>
+          <div class="pb rem">
+            <div class="line"><span class="ic"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="3" width="13" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M2 4l6 5 6-5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></span><div><b>Email</b><span>Emailed to the office when anything is due.</span></div></div>
+            <div class="line"><span class="ic"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="4" y="1.5" width="8" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="8" cy="12" r=".9" fill="currentColor"/></svg></span><div><b>Phone alert</b><span>Push notification to your phone.</span></div></div>
+            <div class="line"><span class="ic"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 4.5V8l2.5 1.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span><div><b>Every morning, 7:52am Melbourne</b><span>Checks every rego and policy.</span></div></div>
+            <div class="steps"><span class="tag warn">7 days before</span><span class="tag crit">2 days before</span></div>
+            <p class="muted">After you renew, use <b>Rego renewed</b> or <b>Insurance renewed</b> on the vehicle. The date moves forward and reminders reset.</p>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </div>
+</main>
+
+<div class="scrim" id="scrim" hidden></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetH" hidden>
+  <header><h2 id="sheetH">Add vehicle</h2><button class="x" type="button" id="closeBtn" aria-label="Close">×</button></header>
+  <form id="form" autocomplete="off">
+    <div class="types" role="radiogroup" aria-label="Vehicle type">
+      <label><input type="radio" name="type" id="tCar" value="car" checked>Car</label>
+      <label><input type="radio" name="type" id="tBike" value="motorcycle">Motorcycle</label>
+      <label><input type="radio" name="type" id="tTruck" value="truck">Truck</label>
+      <label><input type="radio" name="type" id="tTrailer" value="trailer">Trailer</label>
+    </div>
+    <fieldset>
+      <legend>Registration</legend>
+      <label>Rego plate<input id="fPlate" required maxlength="10" placeholder="1AB2CD"></label>
+      <label>Name / make<input id="fName" maxlength="60" placeholder="Kenworth T610"></label>
+      <label>Rego period
+        <select id="fPeriod"><option value="3">3 months</option><option value="6">6 months</option><option value="12" selected>12 months</option></select>
+      </label>
+      <label>Rego expiry<input id="fExpiry" type="date" required></label>
+    </fieldset>
+    <fieldset>
+      <legend>Insurance <em style="text-transform:none;letter-spacing:0;font-weight:400">· optional</em></legend>
+      <label>Insurer<input id="fInsurer" maxlength="40" placeholder="RACV"></label>
+      <label>Policy number<input id="fPolicy" maxlength="40" placeholder="MOT123456789"></label>
+      <label class="full">Insurance expiry<input id="fInsExpiry" type="date"></label>
+    </fieldset>
+    <label class="full"><span>Notes <em>· VIN, garage, anything useful</em></span><textarea id="fNotes" maxlength="300"></textarea></label>
+  </form>
+  <footer>
+    <button class="btn primary" type="submit" form="form" id="fSubmit">Add vehicle</button>
+    <button class="btn" type="button" id="fCancel">Cancel</button>
+    <span class="msg" id="fMsg" role="status"></span>
+  </footer>
+</div>
+<div class="login" id="login" hidden>
+  <form id="loginForm" autocomplete="on">
+    <img src="icons/logo.png" alt="SB Truckin">
+    <h1>Rego Watch</h1>
+    <p>Sign in to see the fleet.</p>
+    <label>Email<input id="lEmail" type="email" autocomplete="username" required></label>
+    <label>Password<input id="lPass" type="password" autocomplete="current-password" required></label>
+    <button class="btn primary" type="submit" id="lBtn" style="justify-content:center">Sign in</button>
+    <span class="msg" id="lMsg" role="status"></span>
+  </form>
+</div>
+<div class="sheet" id="imp" role="dialog" aria-modal="true" aria-labelledby="impH" hidden>
+  <header><h2 id="impH">Import vehicles</h2><button class="x" type="button" id="impClose" aria-label="Close">×</button></header>
+  <form id="impForm" onsubmit="return false">
+    <div class="drop">
+      <b style="color:var(--ink)">Excel (.xlsx) or CSV file</b>
+      <span>One row per vehicle. Columns like Plate, Type, Name, Rego expiry, Rego period, Insurer, Policy, Insurance expiry. Dates as DD/MM/YYYY are fine.</span>
+      <input type="file" id="impFile" accept=".xlsx,.xls,.csv">
+    </div>
+    <div class="prev" id="impPrev" hidden></div>
+  </form>
+  <footer>
+    <button class="btn primary" type="button" id="impGo" disabled>Import</button>
+    <button class="btn" type="button" id="impCancel">Cancel</button>
+    <span class="msg" id="impMsg" role="status"></span>
+  </footer>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="config.js"></script>
+<script>
+if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
+</script>
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const TYPES = {car:"Car", motorcycle:"Motorcycle", truck:"Truck", trailer:"Trailer"};
+  const PLURAL = {car:"cars", motorcycle:"bikes", truck:"trucks", trailer:"trailers"};
+  let db = null, loaded = false, vehicles = [], editingId = null, filter = "all", openMenu = null;
+
+  function todayMel(){ return new Intl.DateTimeFormat("en-CA",{timeZone:"Australia/Melbourne",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date()); }
+  const toUTC = iso => { const p = iso.split("-").map(Number); return Date.UTC(p[0],p[1]-1,p[2]); };
+  const daysLeft = iso => Math.round((toUTC(iso)-toUTC(todayMel()))/86400000);
+  const dObj = iso => { const p = iso.split("-").map(Number); return new Date(p[0],p[1]-1,p[2]); };
+  const fmt = (iso, o) => dObj(iso).toLocaleDateString("en-AU", o || {day:"numeric",month:"short",year:"numeric"});
+  function addMonths(iso, m){
+    const p = iso.split("-").map(Number);
+    const last = new Date(Date.UTC(p[0],p[1]-1+m+1,0)).getUTCDate();
+    return new Date(Date.UTC(p[0],p[1]-1+m,Math.min(p[2],last))).toISOString().slice(0,10);
+  }
+  const level = n => n==null ? -1 : n<=2 ? 2 : n<=7 ? 1 : 0;
+  const cls = l => l===2?"crit":l===1?"warn":"";
+  function leftText(n){ if(n<0) return Math.abs(n)+(n===-1?" day":" days")+" overdue"; if(n===0) return "Due today"; return n+(n===1?" day":" days"); }
+  const el = (tag, c, txt) => { const e = document.createElement(tag); if(c) e.className = c; if(txt!=null) e.textContent = txt; return e; };
+
+  function toast(t){ const x=$("toast"); x.textContent=t; x.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>x.hidden=true,2600); }
+
+  function enrich(){
+    return vehicles.map(v=>{
+      const r = v.expiry ? daysLeft(v.expiry) : null;
+      const i = v.insExpiry ? daysLeft(v.insExpiry) : null;
+      const opts = [r,i].filter(x=>x!=null);
+      return {...v, rLeft:r, iLeft:i, soonest: opts.length ? Math.min(...opts) : 99999};
+    });
+  }
+
+  function render(){
+    $("today").textContent = fmt(todayMel(),{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+    const rows = enrich();
+    // KPIs
+    $("kTotal").textContent = loaded ? rows.length : "–";
+    const counts = {}; rows.forEach(r=>counts[r.type]=(counts[r.type]||0)+1);
+    $("kTypes").textContent = !loaded ? (db===false ? "Sign in to load" : "Loading…") : rows.length ? Object.keys(TYPES).filter(t=>counts[t]).map(t=>counts[t]+" "+(counts[t]===1?TYPES[t].toLowerCase():PLURAL[t])).join(" · ") : "None added yet";
+    $("kWarn").textContent = loaded ? rows.filter(r=>r.soonest<=7 && r.soonest>2).length : "–";
+    $("kCrit").textContent = loaded ? rows.filter(r=>r.soonest<=2).length : "–";
+    const events = [];
+    rows.forEach(r=>{
+      if(r.expiry) events.push({r, kind:"Rego", date:r.expiry, left:r.rLeft, detail:(Number(r.regoPeriod)||12)+"-month rego"});
+      if(r.insExpiry) events.push({r, kind:"Insurance", date:r.insExpiry, left:r.iLeft, detail:[r.insurer, r.policyNo].filter(Boolean).join(" · ") || "Insurance"});
+    });
+    events.sort((a,b)=>a.left-b.left);
+    const nx = events[0];
+    $("kNext").textContent = nx ? nx.r.plate + " · " + nx.kind : "–";
+    $("kNextSub").textContent = nx ? fmt(nx.date,{weekday:"short",day:"numeric",month:"short"}) + " · " + leftText(nx.left) : "";
+
+    // timeline
+    const tl = $("timeline"); tl.textContent = "";
+    const soon = events.filter(e=>e.left<=60).slice(0,8);
+    if(!soon.length){ const li=el("li"); li.style.gridTemplateColumns="1fr"; li.appendChild(el("p","muted", loaded ? "Nothing due in the next 60 days." : "Your upcoming expiries will show here.")); tl.appendChild(li); }
+    for(const e of soon){
+      const li = el("li");
+      const c = el("div","cal"); c.append(el("i",null,fmt(e.date,{month:"short"})), el("b",null,String(dObj(e.date).getDate())));
+      const t = el("div","t"); t.append(el("strong",null,e.r.plate)); t.append(" "+e.kind); t.appendChild(el("span",null,(e.r.name||TYPES[e.r.type]||"")+" · "+e.detail));
+      li.append(c, t, el("span","tag "+(cls(level(e.left))||""), leftText(e.left)));
+      tl.appendChild(li);
+    }
+
+    // fleet
+    const box = $("fleet"); box.textContent = "";
+    const q = $("q").value.trim().toLowerCase();
+    let list = rows.filter(r=> filter==="all" || (filter==="due" ? r.soonest<=7 : r.type===filter));
+    if(q) list = list.filter(r=>[r.plate,r.name,r.insurer,r.policyNo,r.notes].filter(Boolean).join(" ").toLowerCase().includes(q));
+    const s = $("sort").value;
+    list.sort(s==="plate" ? (a,b)=>String(a.plate).localeCompare(b.plate) : s==="type" ? (a,b)=>String(a.type).localeCompare(b.type)||a.soonest-b.soonest : (a,b)=>a.soonest-b.soonest);
+
+    if(!list.length){
+      const e = el("div","empty");
+      if(!loaded && db===false){ e.append(el("b",null,"Sign in to see your fleet"), el("p","muted","Sign in with your SB Truckin login to load and save vehicles.")); }
+      else if(!loaded){ e.append(el("b",null,"Loading your fleet…")); }
+      else if(!rows.length){
+        e.append(el("b",null,"Add your first vehicle"), el("p","muted","Cars, motorcycles, trucks and trailers. Add the rego expiry and, if you like, the insurance policy, and you'll get email and phone reminders before each one runs out."));
+        const b = el("button","btn primary","+ Add vehicle"); b.type="button"; b.onclick=()=>openSheet(); e.appendChild(b);
+      } else { e.append(el("b",null,"No matches"), el("p","muted","Try a different filter or search.")); }
+      box.appendChild(e); return;
+    }
+    for(const r of list){
+      const lv = Math.max(level(r.rLeft), level(r.iLeft));
+      const row = el("div","v "+cls(lv));
+      const plate = el("div","plate", r.plate); plate.appendChild(el("small",null,(TYPES[r.type]||r.type||"").toUpperCase()));
+      const who = el("div","who"); who.append(el("div","nm", r.name || TYPES[r.type] || "Vehicle"));
+      const meta = [(Number(r.regoPeriod)||12)+"-month rego", r.insurer].filter(Boolean).join(" · ");
+      who.append(el("div","meta", meta));
+      if(r.notes) who.append(el("div","meta", r.notes));
+      const chips = el("div","chips");
+      if(r.expiry) chips.append(chip("Rego", r.expiry, r.rLeft, r.notified2===r.expiry ? "2-day reminder sent" : r.notified7===r.expiry ? "7-day reminder sent" : ""));
+      else { const c = el("div","chip"); c.append(el("span","k","Rego"), el("span","tag warn","Add expiry date")); chips.append(c); }
+      if(r.insExpiry) chips.append(chip("Ins", r.insExpiry, r.iLeft, r.insNotified2===r.insExpiry ? "2-day reminder sent" : r.insNotified7===r.insExpiry ? "7-day reminder sent" : ""));
+      else { const c = el("div","chip"); c.append(el("span","k","Ins"), el("span","tag none","Not recorded")); chips.append(c); }
+      const acts = el("div","acts");
+      const per = Number(r.regoPeriod)||12;
+      const ren = el("button","btn sm","Rego renewed"); ren.type="button"; ren.title="Move expiry forward "+per+" months";
+      ren.onclick = async()=>{ const nd=addMonths(r.expiry,per); if(await save(r.id,{expiry:nd,notified7:null,notified2:null})) toast(r.plate+" rego now expires "+fmt(nd)); };
+      const edit = el("button","btn sm","Edit"); edit.type="button"; edit.onclick=()=>openSheet(r);
+      const moreW = el("div","more"); const more = el("button","btn sm ghost","•••"); more.type="button"; more.setAttribute("aria-label","More actions for "+r.plate);
+      more.onclick = ev=>{ ev.stopPropagation(); toggleMenu(moreW, r); };
+      moreW.appendChild(more);
+      if(r.expiry) acts.append(ren); acts.append(edit, moreW);
+      row.append(plate, who, chips, acts);
+      box.appendChild(row);
+    }
+  }
+  function chip(k, iso, left, sent){
+    const c = el("div","chip");
+    c.append(el("span","k",k), el("span","tag "+cls(level(left)), leftText(left)), el("span","d",fmt(iso)));
+    if(sent) c.append(el("span","sent","· "+sent));
+    return c;
+  }
+  function closeMenu(){ if(openMenu){ openMenu.remove(); openMenu=null; } }
+  function toggleMenu(wrap, r){
+    if(openMenu && openMenu.parentNode===wrap){ closeMenu(); return; }
+    closeMenu();
+    const m = el("div","menu"); m.setAttribute("role","menu");
+    const item = (t, fn, c) => { const b = el("button", c||"", t); b.type="button"; b.setAttribute("role","menuitem"); b.onclick = ev=>{ ev.stopPropagation(); fn(b); }; m.appendChild(b); return b; };
+    const per = Number(r.regoPeriod)||12;
+    if(r.expiry) item("Rego renewed (+"+per+" months)", async()=>{ closeMenu(); const nd=addMonths(r.expiry,per); if(await save(r.id,{expiry:nd,notified7:null,notified2:null})) toast(r.plate+" rego now expires "+fmt(nd)); });
+    if(r.insExpiry) item("Insurance renewed (+12 months)", async()=>{ closeMenu(); const nd=addMonths(r.insExpiry,12); if(await save(r.id,{insExpiry:nd,insNotified7:null,insNotified2:null})) toast(r.plate+" insurance now expires "+fmt(nd)); });
+    item("Edit details", ()=>{ closeMenu(); openSheet(r); });
+    m.appendChild(el("div","sep"));
+    item("Remove vehicle", b=>{
+      if(b.dataset.armed){ closeMenu(); remove(r); }
+      else { b.dataset.armed="1"; b.textContent="Tap again to remove "+r.plate; }
+    }, "danger");
+    wrap.appendChild(m); openMenu = m;
+  }
+  document.addEventListener("click", closeMenu);
+  document.addEventListener("keydown", e=>{ if(e.key==="Escape"){ closeMenu(); if(!$("sheet").hidden) closeSheet(); } });
+
+  async function save(id, data){
+    if(!db){ toast("Can't save. Sign in first."); return false; }
+    const body = {...data, updatedAt:new Date().toISOString()};
+    try{
+      if(id) await db.collection("vehicles").doc(id).update(body);
+      else await db.collection("vehicles").add({notified7:null,notified2:null,insNotified7:null,insNotified2:null,...body,createdAt:new Date().toISOString()});
+      return true;
+    }catch(e){ const m="Couldn't save: "+((e&&e.message)||"try again"); if(!$("sheet").hidden){ $("fMsg").textContent=m; $("fMsg").className="msg err"; } else toast(m); return false; }
+  }
+  async function remove(r){
+    try{ await db.collection("vehicles").doc(r.id).delete(); toast("Removed "+r.plate); }catch(e){ toast("Couldn't remove "+r.plate+". Try again."); }
+  }
+
+  // sheet
+  function openSheet(r){
+    editingId = r ? r.id : null;
+    $("form").reset(); $("fMsg").textContent=""; $("fMsg").className="msg";
+    if(r){
+      const t = document.querySelector('input[name="type"][value="'+r.type+'"]'); if(t) t.checked = true;
+      $("fPlate").value=r.plate||""; $("fName").value=r.name||""; $("fPeriod").value=String(Number(r.regoPeriod)||12);
+      $("fExpiry").value=r.expiry||""; $("fInsurer").value=r.insurer||""; $("fPolicy").value=r.policyNo||""; $("fInsExpiry").value=r.insExpiry||""; $("fNotes").value=r.notes||"";
+    }
+    $("sheetH").textContent = r ? "Edit "+r.plate : "Add vehicle";
+    $("fSubmit").textContent = r ? "Save changes" : "Add vehicle";
+    $("scrim").hidden=false; $("sheet").hidden=false;
+    setTimeout(()=>$("fPlate").focus(),30);
+  }
+  function closeSheet(){ $("scrim").hidden=true; $("sheet").hidden=true; editingId=null; $("addBtn").focus(); }
+  $("addBtn").onclick = ()=>openSheet();
+  $("closeBtn").onclick = closeSheet; $("fCancel").onclick = closeSheet; $("scrim").onclick = closeSheet;
+
+  $("form").addEventListener("submit", async e=>{
+    e.preventDefault();
+    const type = (document.querySelector('input[name="type"]:checked')||{}).value || "car";
+    const data = { type, plate:$("fPlate").value.trim().toUpperCase(), name:$("fName").value.trim(),
+      regoPeriod:Number($("fPeriod").value), expiry:$("fExpiry").value,
+      insurer:$("fInsurer").value.trim(), policyNo:$("fPolicy").value.trim().toUpperCase(),
+      insExpiry:$("fInsExpiry").value || null, notes:$("fNotes").value.trim() };
+    if(!data.plate || !data.expiry){ $("fMsg").textContent="Add a plate and a rego expiry date."; $("fMsg").className="msg err"; return; }
+    const prev = editingId && vehicles.find(v=>v.id===editingId);
+    if(prev && prev.expiry!==data.expiry){ data.notified7=null; data.notified2=null; }
+    if(prev && prev.insExpiry!==data.insExpiry){ data.insNotified7=null; data.insNotified2=null; }
+    const wasEdit = !!editingId;
+    $("fSubmit").disabled = true;
+    const ok = await save(editingId, data);
+    $("fSubmit").disabled = false;
+    if(ok){ closeSheet(); toast(wasEdit ? "Saved "+data.plate : "Added "+data.plate); }
+  });
+
+  // filters
+  $("filter").addEventListener("click", e=>{
+    const b = e.target.closest("button[data-f]"); if(!b) return;
+    filter = b.dataset.f;
+    for(const x of $("filter").querySelectorAll("button")) x.setAttribute("aria-pressed", String(x===b));
+    render();
+  });
+  $("q").addEventListener("input", render);
+  $("sort").addEventListener("change", render);
+
+  // ---------- Firebase ----------
+  let unsub = null, auth = null;
+  try{
+    firebase.initializeApp(window.SBT_FIREBASE_CONFIG);
+    auth = firebase.auth();
+    const fs = firebase.firestore();
+    auth.onAuthStateChanged(u=>{
+      if(unsub){ unsub(); unsub=null; }
+      if(!u){ db=false; loaded=false; vehicles=[]; $("login").hidden=false; $("outBtn").hidden=true; render(); return; }
+      $("login").hidden=true; $("outBtn").hidden=false; db=fs;
+      unsub = fs.collection("vehicles").onSnapshot(snap=>{
+        vehicles = snap.docs.map(d=>({id:d.id, ...d.data()}));
+        loaded = true; render();
+      }, err=>{ toast("Couldn't load vehicles: "+(err.code||"check your connection")); });
+    });
+  }catch(e){ db=false; toast("App setup is missing. Check config.js."); }
+  $("loginForm").addEventListener("submit", async e=>{
+    e.preventDefault(); $("lMsg").textContent="Signing in…"; $("lMsg").className="msg";
+    try{ await auth.signInWithEmailAndPassword($("lEmail").value.trim(), $("lPass").value); $("lMsg").textContent=""; }
+    catch(err){ $("lMsg").className="msg err"; $("lMsg").textContent = /password|credential|user/.test(err.code||"") ? "Wrong email or password." : "Couldn't sign in. Check your connection and try again."; }
+  });
+  $("outBtn").onclick = ()=>auth && auth.signOut();
+
+  // ---------- Import ----------
+  let pending = [];
+  const norm = k => String(k||"").toLowerCase().replace(/[^a-z]/g,"");
+  function pick(row, names){ for(const k of Object.keys(row)){ const n=norm(k); if(names.some(x=>n===x||n.includes(x))) return row[k]; } return ""; }
+  function toISO(v){
+    if(v==null||v==="") return null;
+    if(v instanceof Date && !isNaN(v)) return new Date(Date.UTC(v.getFullYear(),v.getMonth(),v.getDate())).toISOString().slice(0,10);
+    if(typeof v==="number"){ const d=new Date(Date.UTC(1899,11,30)+v*86400000); return d.toISOString().slice(0,10); }
+    const t=String(v).trim(); let m;
+    if((m=t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return m[1]+"-"+m[2].padStart(2,"0")+"-"+m[3].padStart(2,"0");
+    if((m=t.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})$/))){ const y=m[3].length===2?"20"+m[3]:m[3]; return y+"-"+m[2].padStart(2,"0")+"-"+m[1].padStart(2,"0"); }
+    const d=new Date(t); return isNaN(d)?null:new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())).toISOString().slice(0,10);
+  }
+  function toType(v, name){
+    const t=norm(v)+" "+norm(name);
+    if(/trailer|tipper|flattop|curtain|dolly/.test(t)) return "trailer";
+    if(/motor|bike|cycle/.test(t)) return "motorcycle";
+    if(/truck|prime|mover|rigid|kenworth|volvo|mack|isuzu|hino|scania|iveco|freightliner|western|daf|fuso/.test(t)) return "truck";
+    return "car";
+  }
+  function mapRow(r){
+    const name = String(pick(r,["name","make","model","description","vehicle"])||"").trim();
+    const per = parseInt(String(pick(r,["period","term","months"])).replace(/\D/g,""),10);
+    return {
+      type: toType(pick(r,["type","category","class"]), name),
+      plate: String(pick(r,["plate","rego","registration","regono","regnumber"])||"").trim().toUpperCase().replace(/\s+/g,""),
+      name,
+      regoPeriod: [3,6,12].includes(per)?per:12,
+      expiry: toISO(pick(r,["regoexpiry","registrationexpiry","expiry","duedate","regodue","expires"])),
+      insurer: String(pick(r,["insurer","insurance","insurancecompany"])||"").trim(),
+      policyNo: String(pick(r,["policy","policyno","policynumber"])||"").trim().toUpperCase(),
+      insExpiry: toISO(pick(r,["insuranceexpiry","insexpiry","policyexpiry","insurancedue","renewal"])),
+      notes: String(pick(r,["notes","comment","vin"])||"").trim()
+    };
+  }
+  function showImp(open){ $("scrim").hidden=!open; $("imp").hidden=!open; if(!open){ $("impFile").value=""; $("impPrev").hidden=true; $("impGo").disabled=true; $("impMsg").textContent=""; pending=[]; } }
+  $("importBtn").onclick=()=>{ if(!db){ toast("Sign in first."); return; } showImp(true); };
+  $("impClose").onclick=()=>showImp(false); $("impCancel").onclick=()=>showImp(false);
+  $("impFile").addEventListener("change", async ()=>{
+    const f=$("impFile").files[0]; if(!f) return;
+    try{
+      const wb = XLSX.read(await f.arrayBuffer(), {type:"array", cellDates:true});
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval:""});
+      pending = rows.map(mapRow).filter(r=>r.plate);
+      const ok = pending.filter(r=>r.expiry);
+      const box=$("impPrev"); box.textContent="";
+      const t=el("table"); const hr=el("tr"); ["Plate","Type","Name","Rego expiry","Period","Insurer","Policy","Ins. expiry"].forEach(h=>hr.appendChild(el("th",null,h))); t.appendChild(hr);
+      pending.forEach(r=>{ const tr=el("tr"); [r.plate,TYPES[r.type],r.name,r.expiry||"missing",r.regoPeriod+" mo",r.insurer,r.policyNo,r.insExpiry||""].forEach((v,i)=>{ const td=el("td",i===3&&!r.expiry?"bad":"",v); tr.appendChild(td); }); t.appendChild(tr); });
+      box.appendChild(t); box.hidden=false;
+      const dup = ok.filter(r=>vehicles.some(v=>v.plate===r.plate)).length;
+      $("impMsg").className="msg"; $("impMsg").textContent = ok.length+" ready to import"+(pending.length-ok.length? ", "+(pending.length-ok.length)+" skipped (no rego expiry)":"")+(dup? ". "+dup+" plate(s) already exist and will be updated":"")+".";
+      $("impGo").disabled = !ok.length;
+    }catch(e){ $("impMsg").className="msg err"; $("impMsg").textContent="Couldn't read that file. Save it as .xlsx or .csv and try again."; }
+  });
+  $("impGo").onclick = async ()=>{
+    const ok = pending.filter(r=>r.expiry); $("impGo").disabled=true; let n=0;
+    for(const r of ok){
+      const ex = vehicles.find(v=>v.plate===r.plate);
+      const data = {...r}; if(!data.insExpiry) data.insExpiry=null;
+      if(await save(ex?ex.id:null, data)) n++;
+      $("impMsg").textContent="Imported "+n+" of "+ok.length+"…";
+    }
+    showImp(false); toast("Imported "+n+" vehicle"+(n===1?"":"s"));
+  };
+
+  render();
+  setInterval(render, 10*60*1000);
+})();
+</script>
+</body>
+</html>
