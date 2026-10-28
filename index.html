@@ -568,7 +568,20 @@ if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catc
   $("loginForm").addEventListener("submit", async e=>{
     e.preventDefault(); $("lMsg").textContent="Signing in…"; $("lMsg").className="msg";
     try{ await auth.signInWithEmailAndPassword($("lEmail").value.trim(), $("lPass").value); $("lMsg").textContent=""; }
-    catch(err){ $("lMsg").className="msg err"; $("lMsg").textContent = /password|credential|user/.test(err.code||"") ? "Wrong email or password." : "Couldn't sign in. Check your connection and try again."; }
+    catch(err){
+      const c = (err && err.code) || "unknown";
+      const M = {
+        "auth/unauthorized-domain":"This web address isn't allowed yet. In Firebase add it under Authentication > Settings > Authorized domains.",
+        "auth/operation-not-allowed":"Email/Password sign-in is switched off. Turn it on in Firebase > Authentication > Sign-in method.",
+        "auth/invalid-credential":"Wrong email or password.", "auth/wrong-password":"Wrong email or password.",
+        "auth/user-not-found":"No user with that email. Add it in Firebase > Authentication > Users.",
+        "auth/invalid-email":"That email address doesn't look right.",
+        "auth/too-many-requests":"Too many tries. Wait a few minutes and try again.",
+        "auth/network-request-failed":"No connection to Firebase. Check your internet and try again.",
+        "auth/api-key-not-valid.-please-pass-a-valid-api-key.":"The Firebase key in config.js is wrong."
+      };
+      $("lMsg").className="msg err"; $("lMsg").textContent = (M[c] || "Couldn't sign in.") + " (" + c + ")";
+    }
   });
   $("outBtn").onclick = ()=>auth && auth.signOut();
 
