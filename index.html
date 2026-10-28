@@ -587,12 +587,18 @@ if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catc
 
   // ---------- Import ----------
   let pending = [];
-  const norm = k => String(k||"").toLowerCase().replace(/[^a-z]/g,"");
-  function pick(row, names){ for(const k of Object.keys(row)){ const n=norm(k); if(names.some(x=>n===x||n.includes(x))) return row[k]; } return ""; }
+  const norm = k => String(k||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+  // find a column by trying patterns in priority order; exact match first, then contains
+  function col(keys, pats, avoid){
+    const ks = keys.map(k=>({k, n:norm(k)})).filter(o=>!(avoid||[]).some(a=>o.n.includes(a)));
+    for(const p of pats){ const e = ks.find(o=>o.n===p); if(e) return e.k; }
+    for(const p of pats){ const e = ks.find(o=>o.n.includes(p)); if(e) return e.k; }
+    return null;
+  }
   function toISO(v){
     if(v==null||v==="") return null;
-    if(v instanceof Date && !isNaN(v)) return new Date(Date.UTC(v.getFullYear(),v.getMonth(),v.getDate())).toISOString().slice(0,10);
-    if(typeof v==="number"){ const d=new Date(Date.UTC(1899,11,30)+v*86400000); return d.toISOString().slice(0,10); }
+    if(v instanceof Date && !isNaN(v)){ const d=new Date(v.getTime()+12*3600000); return d.toISOString().slice(0,10); }
+    if(typeof v==="number"){ const d=new Date(Date.UTC(1899,11,30)+Math.round(v)*86400000); return d.toISOString().slice(0,10); }
     const t=String(v).trim(); let m;
     if((m=t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return m[1]+"-"+m[2].padStart(2,"0")+"-"+m[3].padStart(2,"0");
     if((m=t.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})$/))){ const y=m[3].length===2?"20"+m[3]:m[3]; return y+"-"+m[2].padStart(2,"0")+"-"+m[1].padStart(2,"0"); }
@@ -600,25 +606,64 @@ if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catc
   }
   function toType(v, name){
     const t=norm(v)+" "+norm(name);
-    if(/trailer|tipper|flattop|curtain|dolly/.test(t)) return "trailer";
+    if(/trailer|tipper|flattop|curtain|dolly|barker|krueger|maxitrans|vawdrey/.test(t)) return "trailer";
     if(/motor|bike|cycle/.test(t)) return "motorcycle";
-    if(/truck|prime|mover|rigid|kenworth|volvo|mack|isuzu|hino|scania|iveco|freightliner|western|daf|fuso/.test(t)) return "truck";
+    if(/truck|heavy|prime|mover|rigid|kenworth|volvo|mack|isuzu|hino|scania|iveco|freightliner|western|daf|fuso|actros|man|45t/.test(t)) return "truck";
     return "car";
   }
-  function mapRow(r){
-    const name = String(pick(r,["name","make","model","description","vehicle"])||"").trim();
-    const per = parseInt(String(pick(r,["period","term","months"])).replace(/\D/g,""),10);
-    return {
-      type: toType(pick(r,["type","category","class"]), name),
-      plate: String(pick(r,["plate","rego","registration","regono","regnumber"])||"").trim().toUpperCase().replace(/\s+/g,""),
-      name,
-      regoPeriod: [3,6,12].includes(per)?per:12,
-      expiry: toISO(pick(r,["regoexpiry","registrationexpiry","expiry","duedate","regodue","expires"])),
-      insurer: String(pick(r,["insurer","insurance","insurancecompany"])||"").trim(),
-      policyNo: String(pick(r,["policy","policyno","policynumber"])||"").trim().toUpperCase(),
-      insExpiry: toISO(pick(r,["insuranceexpiry","insexpiry","policyexpiry","insurancedue","renewal"])),
-      notes: String(pick(r,["notes","comment","vin"])||"").trim()
+  // read every sheet, find the header row, keep the sheet with the most plates
+  function parseWorkbook(wb){
+    let best = [];
+    for(const sn of wb.SheetNames){
+      const grid = XLSX.utils.sheet_to_json(wb.Sheets[sn], {header:1, defval:"", raw:true});
+      for(let h=0; h<Math.min(grid.length,15); h++){
+        const hdr = grid[h].map(x=>String(x||"").trim());
+        const n = hdr.map(norm);
+        const hasPlate = n.some(x=>/plate|^rego$|registration$|regono|regonumber/.test(x));
+        const hasExp = n.some(x=>/expiry|expires|due/.test(x));
+        if(!hasPlate || !hasExp) continue;
+        const rows = grid.slice(h+1).map(r=>{ const o={}; hdr.forEach((k,i)=>{ if(k) o[k]=r[i]; }); return o; });
+        const out = mapRows(hdr.filter(Boolean), rows);
+        if(out.length > best.length) best = out;
+        break;
+      }
+    }
+    return best;
+  }
+  function mapRows(keys, rows){
+    const C = {
+      plate: col(keys,["regoplate","plate","numberplate","registrationnumber","regono","regonumber","rego","registration"],["expiry","days","status","due","term"]),
+      id: col(keys,["vehicleid","fleetno","fleetnumber","unit"]),
+      make: col(keys,["make"]), model: col(keys,["model"]), year: col(keys,["year"]),
+      name: col(keys,["name","description","vehiclename"]),
+      type: col(keys,["vehicletype","type","category"]),
+      exp: col(keys,["regoexpiry","registrationexpiry","regodue","regoexpires","expiry"],["ins","policy","renew","roadworth","insp","days"]),
+      per: col(keys,["regoterm","regoperiod","term","period"],["insp"]),
+      insurer: col(keys,["insurer","insurancecompany"]),
+      policy: col(keys,["policyno","policynumber","policy"]),
+      insExp: col(keys,["insuranceexpiry","insexpiry","policyexpiry","insurancedue"]),
+      vin: col(keys,["vin","chassis"]), driver: col(keys,["assigneddriver","driver"]), depot: col(keys,["depot","location"]),
+      notes: col(keys,["notes","comments"])
     };
+    const g = (r,k) => k ? r[k] : "";
+    return rows.map(r=>{
+      const plate = String(g(r,C.plate)||"").trim().toUpperCase().replace(/\s+/g,"");
+      if(!plate || plate.length>10) return null;
+      let name = String(g(r,C.name)||"").trim();
+      if(!name) name = [g(r,C.make), g(r,C.model)].filter(Boolean).join(" ").trim();
+      const yr = String(g(r,C.year)||"").trim(); if(name && /^\d{4}$/.test(yr)) name += " ("+yr+")";
+      const per = parseInt(String(g(r,C.per)).replace(/\D/g,""),10);
+      const notes = [g(r,C.id), g(r,C.vin)?"VIN "+g(r,C.vin):"", g(r,C.driver)?"Driver: "+g(r,C.driver):"", g(r,C.depot), g(r,C.notes)].map(x=>String(x||"").trim()).filter(Boolean).join(" · ");
+      return {
+        type: toType(g(r,C.type), name), plate, name,
+        regoPeriod: [3,6,12].includes(per)?per:12,
+        expiry: toISO(g(r,C.exp)),
+        insurer: String(g(r,C.insurer)||"").trim(),
+        policyNo: String(g(r,C.policy)||"").trim().toUpperCase(),
+        insExpiry: toISO(g(r,C.insExp)),
+        notes
+      };
+    }).filter(Boolean);
   }
   function showImp(open){ $("scrim").hidden=!open; $("imp").hidden=!open; if(!open){ $("impFile").value=""; $("impPrev").hidden=true; $("impGo").disabled=true; $("impMsg").textContent=""; pending=[]; } }
   $("importBtn").onclick=()=>{ if(!db){ toast("Sign in first."); return; } showImp(true); };
@@ -627,8 +672,8 @@ if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catc
     const f=$("impFile").files[0]; if(!f) return;
     try{
       const wb = XLSX.read(await f.arrayBuffer(), {type:"array", cellDates:true});
-      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval:""});
-      pending = rows.map(mapRow).filter(r=>r.plate);
+      pending = parseWorkbook(wb);
+      if(!pending.length) throw new Error("none");
       const ok = pending.filter(r=>r.expiry);
       const box=$("impPrev"); box.textContent="";
       const t=el("table"); const hr=el("tr"); ["Plate","Type","Name","Rego expiry","Period","Insurer","Policy","Ins. expiry"].forEach(h=>hr.appendChild(el("th",null,h))); t.appendChild(hr);
@@ -637,7 +682,7 @@ if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catc
       const dup = ok.filter(r=>vehicles.some(v=>v.plate===r.plate)).length;
       $("impMsg").className="msg"; $("impMsg").textContent = ok.length+" ready to import"+(pending.length-ok.length? ", "+(pending.length-ok.length)+" skipped (no rego expiry)":"")+(dup? ". "+dup+" plate(s) already exist and will be updated":"")+".";
       $("impGo").disabled = !ok.length;
-    }catch(e){ $("impMsg").className="msg err"; $("impMsg").textContent="Couldn't read that file. Save it as .xlsx or .csv and try again."; }
+    }catch(e){ $("impMsg").className="msg err"; $("impMsg").textContent="No vehicles found. The sheet needs a Plate (or Rego Plate) column and a Rego Expiry column."; }
   });
   $("impGo").onclick = async ()=>{
     const ok = pending.filter(r=>r.expiry); $("impGo").disabled=true; let n=0;
