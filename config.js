@@ -1,10 +1,9 @@
-// STEP 3 of the setup guide: paste your Firebase web app config here.
-// (Firebase console > Project settings > Your apps > Web app > SDK setup and configuration > Config)
+// Firebase connection for SB Truckin Rego Watch (project sbt-rego-s).
 window.SBT_FIREBASE_CONFIG = {
-  apiKey: "PASTE_HERE",
-  authDomain: "PASTE_HERE.firebaseapp.com",
-  projectId: "PASTE_HERE",
-  storageBucket: "PASTE_HERE.appspot.com",
-  messagingSenderId: "PASTE_HERE",
-  appId: "PASTE_HERE"
+  apiKey: "AIzaSyD8pIdKKKuZ-fc8lLy3AQD7QM_wRpwRNWg",
+  authDomain: "sbt-rego-s.firebaseapp.com",
+  projectId: "sbt-rego-s",
+  storageBucket: "sbt-rego-s.firebasestorage.app",
+  messagingSenderId: "410164813989",
+  appId: "1:410164813989:web:6c45e7e4fd66656e232d4c"
 };
