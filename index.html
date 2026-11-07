@@ -89,6 +89,39 @@ main .in{display:flex;flex-direction:column;gap:20px}
 .kpi.warn b{color:var(--warn)} .kpi.crit b{color:var(--crit)}
 .kpi.warn{border-top-color:var(--warn)} .kpi.crit{border-top-color:var(--red)}
 .kpi.next b{font-size:20px;line-height:1.25;padding-top:6px}
+button.kpi{font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%}
+button.kpi:hover{border-color:var(--muted)}
+button.kpi .go{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--muted);margin-top:auto;padding-top:4px}
+button.kpi:hover .go{color:var(--ink)}
+@media (prefers-reduced-motion:no-preference){button.kpi{transition:transform .12s ease,border-color .12s ease}button.kpi:hover{transform:translateY(-2px)}}
+
+/* tile details */
+.detb{flex:1;overflow:auto;padding:16px 20px;display:flex;flex-direction:column;gap:14px}
+.detb .lead{margin:0;color:var(--muted);font-size:14px}
+.dl{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.it{display:grid;grid-template-columns:92px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px;border:0;border-bottom:1px solid var(--line);background:var(--surface);text-align:left;width:100%;font:inherit;color:inherit}
+.it:last-child{border-bottom:0}
+.it:hover{background:var(--surface-2)}
+.it .plate{font-size:13px;padding:7px 4px 5px}
+.it .who .nm{font-size:14px}
+.it .tags{display:flex;flex-direction:column;gap:4px;margin-top:4px}
+.it .tags span.row{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--muted)}
+.it .tags b{font-size:10px;letter-spacing:.1em;text-transform:uppercase;width:28px}
+.it .chev{color:var(--muted);font-size:20px;line-height:1}
+.tchips{display:flex;flex-wrap:wrap;gap:8px}
+.tchips button{border:1px solid var(--line);background:var(--surface-2);border-radius:99px;padding:6px 12px;font-size:13px;font-weight:600}
+.tchips button:hover{border-color:var(--accent)}
+.vhead{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.vhead .plate{font-size:20px;padding:10px 14px 8px;min-width:130px}
+.vhead .nm{font:800 18px/1.2 var(--f-display)}
+.vhead .meta{color:var(--muted);font-size:13px}
+.dsec{border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.dsec.warn{border-color:var(--warn)} .dsec.crit{border-color:var(--crit)}
+.dsec h3{margin:0;font:700 12px/1 var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;align-items:center;gap:8px}
+.kv{display:grid;grid-template-columns:110px minmax(0,1fr);gap:6px 12px;font-size:14px;margin:0}
+.kv dt{color:var(--muted)} .kv dd{margin:0;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.dsec .btns{display:flex;gap:8px;flex-wrap:wrap}
+.x.back{font-size:26px;margin-left:-8px}
 
 .grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);min-width:0}
@@ -231,10 +264,10 @@ textarea{resize:vertical;min-height:64px}
 <main class="gut">
   <div class="in">
     <section class="kpis" aria-label="Summary">
-      <div class="kpi"><small>Vehicles</small><b id="kTotal">–</b><span id="kTypes">Loading…</span></div>
-      <div class="kpi warn"><small>Due in 7 days</small><b id="kWarn">–</b><span>Rego or insurance</span></div>
-      <div class="kpi crit"><small>Urgent / overdue</small><b id="kCrit">–</b><span>2 days or less</span></div>
-      <div class="kpi next"><small>Next expiry</small><b id="kNext">–</b><span id="kNextSub"></span></div>
+      <button type="button" class="kpi" data-k="all"><small>Vehicles</small><b id="kTotal">–</b><span id="kTypes">Loading…</span><span class="go">View all ›</span></button>
+      <button type="button" class="kpi warn" data-k="warn"><small>Due in 7 days</small><b id="kWarn">–</b><span>Rego or insurance</span><span class="go">See which ›</span></button>
+      <button type="button" class="kpi crit" data-k="crit"><small>Urgent / overdue</small><b id="kCrit">–</b><span>2 days or less</span><span class="go">See which ›</span></button>
+      <button type="button" class="kpi next" data-k="next"><small>Next expiry</small><b id="kNext">–</b><span id="kNextSub"></span><span class="go">Open details ›</span></button>
     </section>
 
     <div class="grid">
@@ -345,6 +378,11 @@ textarea{resize:vertical;min-height:64px}
     <span class="msg" id="impMsg" role="status"></span>
   </footer>
 </div>
+<div class="sheet" id="det" role="dialog" aria-modal="true" aria-labelledby="detH" hidden>
+  <header><button class="x back" type="button" id="detBack" aria-label="Back" hidden>‹</button><h2 id="detH">Details</h2><button class="x" type="button" id="detClose" aria-label="Close">×</button></header>
+  <div class="detb" id="detBody"></div>
+  <footer id="detFoot"></footer>
+</div>
 <div class="toast" id="toast" role="status" hidden></div>
 
 
@@ -405,6 +443,8 @@ if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catc
     });
     events.sort((a,b)=>a.left-b.left);
     const nx = events[0];
+    nextId = nx ? nx.r.id : null;
+    if(detView) renderDet();
     $("kNext").textContent = nx ? nx.r.plate + " · " + nx.kind : "–";
     $("kNextSub").textContent = nx ? fmt(nx.date,{weekday:"short",day:"numeric",month:"short"}) + " · " + leftText(nx.left) : "";
 
@@ -470,6 +510,118 @@ if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catc
     if(sent) c.append(el("span","sent","· "+sent));
     return c;
   }
+  // ---------- tile details ----------
+  let detView = null, detStack = [], nextId = null;
+  function openDet(view){
+    if(!loaded){ toast(db===false ? "Sign in first." : "Still loading your fleet…"); return; }
+    detStack = []; detView = view;
+    $("scrim").hidden = false; $("det").hidden = false;
+    renderDet(); setTimeout(()=>$("detClose").focus(), 30);
+  }
+  function goDet(view){ detStack.push(detView); detView = view; renderDet(); $("detBody").scrollTop = 0; }
+  function closeDet(){
+    detView = null; detStack = []; $("det").hidden = true;
+    if($("sheet").hidden && $("imp").hidden) $("scrim").hidden = true;
+  }
+  $("detClose").onclick = closeDet;
+  $("detBack").onclick = ()=>{ if(detStack.length){ detView = detStack.pop(); renderDet(); } };
+  document.querySelector(".kpis").addEventListener("click", e=>{
+    const b = e.target.closest("button[data-k]"); if(!b) return;
+    const k = b.dataset.k;
+    if(k==="next"){ if(!nextId){ if(loaded) toast("No expiry dates recorded yet."); else openDet({k:"all"}); return; } openDet({k:"veh", id:nextId}); }
+    else openDet({k});
+  });
+  function showInRegister(f){
+    closeDet(); filter = f;
+    for(const x of $("filter").querySelectorAll("button")) x.setAttribute("aria-pressed", String(x.dataset.f===f));
+    render(); $("fleetH").scrollIntoView({behavior:"smooth", block:"start"});
+  }
+  function btnEl(text, c, fn){ const b = el("button", "btn "+(c||""), text); b.type = "button"; b.onclick = fn; return b; }
+  function itemRow(r){
+    const b = el("button","it"); b.type = "button"; b.setAttribute("aria-label","Open "+r.plate);
+    const plate = el("div","plate", r.plate); plate.appendChild(el("small",null,(TYPES[r.type]||"").toUpperCase()));
+    const who = el("div","who"); who.append(el("div","nm", r.name || TYPES[r.type] || "Vehicle"));
+    const tags = el("div","tags");
+    const line = (k, iso, left)=>{ const s = el("span","row"); s.append(el("b",null,k)); if(iso){ s.append(el("span","tag "+cls(level(left)), leftText(left)), fmt(iso)); } else s.append(el("span","tag none","Not recorded")); return s; };
+    tags.append(line("Rego", r.expiry, r.rLeft), line("Ins", r.insExpiry, r.iLeft));
+    who.append(tags);
+    b.append(plate, who, el("span","chev","›"));
+    b.onclick = ()=>goDet({k:"veh", id:r.id});
+    return b;
+  }
+  function listView(title, lead, list, emptyText, regFilter){
+    $("detH").textContent = title + " (" + list.length + ")";
+    const body = $("detBody");
+    if(lead) body.append(el("p","lead", lead));
+    if(!list.length){ const e = el("div","empty"); e.append(el("b",null,"All clear"), el("p","muted", emptyText)); body.append(e); }
+    else { const dl = el("div","dl"); list.forEach(r=>dl.append(itemRow(r))); body.append(dl); }
+    $("detFoot").append(btnEl("Show in fleet register","",()=>showInRegister(regFilter)), btnEl("Close","",closeDet));
+  }
+  function remText(n7, n2, iso){ return n2===iso ? "7-day and 2-day reminders sent" : n7===iso ? "7-day reminder sent" : "None sent yet"; }
+  function kv(pairs){
+    const dl = el("dl","kv");
+    pairs.forEach(([k,v])=>{ if(v==null || v==="") return; dl.append(el("dt",null,k)); const dd = el("dd"); if(v instanceof Node) dd.append(v); else dd.textContent = v; dl.append(dd); });
+    return dl;
+  }
+  function vehView(r){
+    $("detH").textContent = r.plate;
+    const body = $("detBody");
+    const head = el("div","vhead");
+    const plate = el("div","plate", r.plate); plate.appendChild(el("small",null,(TYPES[r.type]||"").toUpperCase()));
+    const w = el("div"); w.append(el("div","nm", r.name || TYPES[r.type] || "Vehicle"), el("div","meta", TYPES[r.type] || ""));
+    head.append(plate, w); body.append(head);
+
+    const per = Number(r.regoPeriod)||12;
+    const rs = el("section","dsec "+(r.expiry ? cls(level(r.rLeft)) : ""));
+    const rh = el("h3",null,"Registration"); if(r.expiry) rh.append(el("span","tag "+cls(level(r.rLeft)), leftText(r.rLeft)));
+    rs.append(rh);
+    if(r.expiry){
+      rs.append(kv([["Expires", fmt(r.expiry,{weekday:"long",day:"numeric",month:"long",year:"numeric"})], ["Rego period", per+" months"], ["Next expiry after renewal", fmt(addMonths(r.expiry, per))], ["Reminders", remText(r.notified7, r.notified2, r.expiry)]]));
+      const bt = el("div","btns");
+      bt.append(btnEl("Rego renewed (+"+per+" months)","primary", async()=>{ const nd = addMonths(r.expiry, per); if(await save(r.id,{expiry:nd,notified7:null,notified2:null})) toast(r.plate+" rego now expires "+fmt(nd)); }));
+      rs.append(bt);
+    } else { rs.append(el("p","muted","No rego expiry recorded."), btnEl("Add rego expiry","sm",()=>{ closeDet(); openSheet(r); })); }
+    body.append(rs);
+
+    const is = el("section","dsec "+(r.insExpiry ? cls(level(r.iLeft)) : ""));
+    const ih = el("h3",null,"Insurance"); if(r.insExpiry) ih.append(el("span","tag "+cls(level(r.iLeft)), leftText(r.iLeft)));
+    is.append(ih);
+    if(r.insExpiry || r.insurer || r.policyNo){
+      is.append(kv([["Insurer", r.insurer || "—"], ["Policy number", r.policyNo || "—"], ["Expires", r.insExpiry ? fmt(r.insExpiry,{weekday:"long",day:"numeric",month:"long",year:"numeric"}) : "Not recorded"], ["Reminders", r.insExpiry ? remText(r.insNotified7, r.insNotified2, r.insExpiry) : ""]]));
+      if(r.insExpiry){ const bt = el("div","btns"); bt.append(btnEl("Insurance renewed (+12 months)","", async()=>{ const nd = addMonths(r.insExpiry, 12); if(await save(r.id,{insExpiry:nd,insNotified7:null,insNotified2:null})) toast(r.plate+" insurance now expires "+fmt(nd)); })); is.append(bt); }
+    } else { is.append(el("p","muted","No insurance recorded."), btnEl("Add insurance","sm",()=>{ closeDet(); openSheet(r); })); }
+    body.append(is);
+
+    if(r.notes){ const ns = el("section","dsec"); ns.append(el("h3",null,"Notes"), el("p",null,r.notes)); ns.lastChild.style.margin="0"; body.append(ns); }
+    const meta = [r.createdAt && "Added "+fmt(r.createdAt.slice(0,10)), r.updatedAt && "Updated "+fmt(r.updatedAt.slice(0,10))].filter(Boolean).join(" · ");
+    if(meta) body.append(el("p","lead", meta));
+    $("detFoot").append(btnEl("Edit details","",()=>{ closeDet(); openSheet(r); }), btnEl("Close","",closeDet));
+  }
+  function renderDet(){
+    if(!detView || $("det").hidden) return;
+    const rows = enrich();
+    $("detBody").textContent = ""; $("detFoot").textContent = "";
+    $("detBack").hidden = !detStack.length;
+    const bySoon = (a,b)=>a.soonest-b.soonest;
+    const k = detView.k;
+    if(k==="all"){
+      $("detH").textContent = "All vehicles (" + rows.length + ")";
+      const counts = {}; rows.forEach(r=>counts[r.type]=(counts[r.type]||0)+1);
+      const tc = el("div","tchips");
+      Object.keys(TYPES).filter(t=>counts[t]).forEach(t=>tc.append(btnEl(counts[t]+" "+(counts[t]===1?TYPES[t]:PLURAL[t].replace(/^./,c=>c.toUpperCase())),"",()=>showInRegister(t))));
+      if(tc.childNodes.length) $("detBody").append(tc);
+      listView("All vehicles", "Soonest due first. Tap a vehicle for its full details, or a type above to filter the register.", rows.slice().sort(bySoon), "No vehicles added yet.", "all");
+    } else if(k==="warn"){
+      listView("Due in 7 days", "Rego or insurance expiring in 3 to 7 days.", rows.filter(r=>r.soonest<=7 && r.soonest>2).sort(bySoon), "Nothing expires in the next 3 to 7 days.", "due");
+    } else if(k==="crit"){
+      listView("Urgent / overdue", "Rego or insurance expiring within 2 days, or already overdue. Renew these first.", rows.filter(r=>r.soonest<=2).sort(bySoon), "Nothing is due within 2 days or overdue.", "due");
+    } else if(k==="veh"){
+      const r = rows.find(x=>x.id===detView.id);
+      if(!r){ $("detH").textContent = "Vehicle removed"; $("detBody").append(el("p","lead","This vehicle is no longer in the fleet register.")); $("detFoot").append(btnEl("Close","",closeDet)); return; }
+      vehView(r);
+    }
+  }
+
   function closeMenu(){ if(openMenu){ openMenu.remove(); openMenu=null; } }
   function toggleMenu(wrap, r){
     if(openMenu && openMenu.parentNode===wrap){ closeMenu(); return; }
@@ -488,7 +640,7 @@ if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catc
     wrap.appendChild(m); openMenu = m;
   }
   document.addEventListener("click", closeMenu);
-  document.addEventListener("keydown", e=>{ if(e.key==="Escape"){ closeMenu(); if(!$("sheet").hidden) closeSheet(); } });
+  document.addEventListener("keydown", e=>{ if(e.key==="Escape"){ closeMenu(); if(!$("sheet").hidden) closeSheet(); else if(!$("det").hidden) closeDet(); } });
 
   async function save(id, data){
     if(!db){ toast("Can't save. Sign in first."); return false; }
@@ -519,7 +671,8 @@ if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catc
   }
   function closeSheet(){ $("scrim").hidden=true; $("sheet").hidden=true; editingId=null; $("addBtn").focus(); }
   $("addBtn").onclick = ()=>openSheet();
-  $("closeBtn").onclick = closeSheet; $("fCancel").onclick = closeSheet; $("scrim").onclick = closeSheet;
+  $("closeBtn").onclick = closeSheet; $("fCancel").onclick = closeSheet;
+  $("scrim").onclick = ()=>{ if(!$("sheet").hidden) closeSheet(); else if(!$("imp").hidden) showImp(false); else closeDet(); };
 
   $("form").addEventListener("submit", async e=>{
     e.preventDefault();
